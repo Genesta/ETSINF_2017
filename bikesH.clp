@@ -190,6 +190,8 @@
   (neighbourhood ?d ?b2)
   (min_path ?x ?min)
   (test (control (+ 1 ?c) ?b1 ?b2 ?min yes yes))
+  (max-depth ?deep)
+  (test (< ?n ?deep))
   =>
   (assert (state current ?x dest ?d bike yes cost (+ ?c 1) level (+ ?n 1)))
   (printout t "Bike taken at: " ?x " Cost: " ?c crlf)
@@ -204,6 +206,8 @@
   (neighbourhood ?d ?b2)
   (min_path ?x ?min)
   (test (control (+ 1 ?c) ?b1 ?b2 ?min no yes))
+  (max-depth ?deep)
+  (test (< ?n ?deep))
   =>
   (assert (state current ?x dest ?d bike no cost (+ ?c 1) level(+ ?n 1)))
   (printout t "Bike dropped at: " ?x " Cost: " ?c crlf)

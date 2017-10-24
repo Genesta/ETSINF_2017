@@ -86,24 +86,24 @@
 
 
 (defrule walking
-  (state current ?x dest ?d bike no cost ?c level ?n)
+  (state current ?x dest ?d bike ?have_bike cost ?c level ?n)
   (path ?x ?y ?cc ?)
   (max-depth ?deep)
   (test (< ?n ?deep))
     =>
-  (assert (state current ?y dest ?d bike no cost (+ ?c ?cc) level (+ ?n 1)))
+  (assert (state current ?y dest ?d bike ?have_bike cost (+ ?c ?cc) level (+ ?n 1)))
   (bind ?*nod-gen* (+ ?*nod-gen* 1))
   (printout t "Walking. Last state: " ?x " Cost: " ?c " Level:" ?n crlf)
 )
 
 
 (defrule cyclig
-  ?f<-(state current ?x dest ?d bike yes cost ?c level ?n)
-  (path ?x ?y ?cc ?)
+  (state current ?x dest ?d bike ?have_bike cost ?c level ?n)
+  (path ?x ?y ?cc bike)
   (max-depth ?deep)
   (test (< ?n ?deep))
     =>
-  (assert (state current ?y dest ?d bike yes cost (+ ?cc (div ?c 2)) level (+ ?n 1)))
+  (assert (state current ?y dest ?d bike ?have_bike cost (+ ?c (div ?cc 2)) level (+ ?n 1)))
   (bind ?*nod-gen* (+ ?*nod-gen* 1))
   (printout t "Cycling. Last state: " ?x " Cost: " ?c " Level:" ?n crlf)
 )
@@ -112,6 +112,8 @@
 (defrule take_bike
   (state current ?x dest ?d bike no cost ?c level ?n)
   (station ?x yes)
+  (max-depth ?deep)
+  (test (< ?n ?deep))
   =>
   (assert (state current ?x dest ?d bike yes cost (+ ?c 1) level (+ ?n 1)))
   (printout t "Bike taken at: " ?x " Cost: " ?c crlf)
@@ -121,6 +123,8 @@
 (defrule drop_bike
   (state current ?x dest ?d bike yes cost ?c level ?n)
   (station ?x yes)
+  (max-depth ?deep)
+  (test (< ?n ?deep))
   =>
   (assert (state current ?x dest ?d bike no cost (+ ?c 1) level(+ ?n 1)))
   (printout t "Bike dropped at: " ?x " Cost: " ?c crlf)
