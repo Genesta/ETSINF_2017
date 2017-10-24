@@ -42,26 +42,26 @@
 (neighbourhood R 6)
 )
 
-;;(neight1 ?b1 neight2 ?b2 minpath ?min bike_si/no ?have_bike stationyes/no ?is_station)
+
 (deffunction h1 (?b1 ?b2 ?min ?have_bike ?is_station)
         (bind ?h 0)
         (if (eq ?b1 ?b2)
 	  then    (bind ?h 1)
 	  else   (bind ?h (abs (- ?b1 ?b2)))
        )
-       (bind ?h (* ?h 5))
-       (if (or(eq ?have_bike yes)(eq ?is_station yes)
+       (bind ?h (* ?h ?min))
+       (if (or(eq ?have_bike yes)(eq ?is_station yes))
        	then (bind ?h (* ?h 0.5))
        	else (bind ?h (* ?h 1))
        )
-       ?h ;return ?h
+       (integer ?h) ;return ?h
 )
 
-(deffunction control (?c ?b1 ?b2 ?min ?have_bike ?is_station)
+(deffunction control (?g ?b1 ?b2 ?min ?have_bike ?is_station)
     (bind ?*f* (h1 ?b1 ?b2 ?min ?have_bike ?is_station))
-    (bind ?*f* (+ ?*f* ?c))
+    (bind ?*f* (+ ?*f* ?g))
 )
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (deffacts map
   (path A B 10 bike)
   (path A C 8 foot)
@@ -148,7 +148,7 @@
 
 (defrule walking
   (declare (salience (- 0 ?*f*)))
-  (state current ?x dest ?d bike no cost ?c level ?n)
+  (state current ?x dest ?d bike ?have_bike cost ?c level ?n)
   (path ?x ?y ?cc ?)
   (max-depth ?deep)
   (test (< ?n ?deep))
@@ -156,9 +156,9 @@
   (neighbourhood ?d ?b2)
   (min_path ?y ?min)
   (station ?y ?is_station)
-  (test (control (+ ?cc ?c) ?b1 ?b2 ?min no ?is_station))
+  (test (control (+ ?cc ?c) ?b1 ?b2 ?min  ?have_bike ?is_station))
     =>
-  (assert (state current ?y dest ?d bike no cost (+ ?c ?cc) level (+ ?n 1)))
+  (assert (state current ?y dest ?d bike ?have_bike cost (+ ?c ?cc) level (+ ?n 1)))
   (bind ?*nod-gen* (+ ?*nod-gen* 1))
   (printout t "Walking. Last state: " ?x " Cost: " ?c " Level:" ?n crlf)
 )
@@ -167,7 +167,7 @@
 (defrule cyclig
   (declare (salience (- 0 ?*f*)))
   (state current ?x dest ?d bike yes cost ?c level ?n)
-  (path ?x ?y ?cc ?)
+  (path ?x ?y ?cc bike)
   (max-depth ?deep)
   (test (< ?n ?deep))
   (neighbourhood ?y ?b1)
@@ -176,7 +176,7 @@
   (station ?y ?is_station)
   (test (control (+ ?c (div ?cc 2)) ?b1 ?b2 ?min yes ?is_station))
     =>
-  (assert (state current ?y dest ?d bike yes cost (+ ?c (div ?cc 2) )) level (+ ?n 1)))
+  (assert (state current ?y dest ?d bike yes cost (+ ?c (div ?cc 2) ) level (+ ?n 1)))
   (bind ?*nod-gen* (+ ?*nod-gen* 1))
   (printout t "Cycling. Last state: " ?x " Cost: " ?c " Level:" ?n crlf)
 )
