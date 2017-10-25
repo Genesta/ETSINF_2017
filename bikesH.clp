@@ -101,7 +101,6 @@
   (path R P 4 bike)
 )
 
-
 (deffacts stations
   (station A yes)
   (station B yes)
@@ -124,25 +123,6 @@
 )
 
 
-(deffunction h1 (?b1 ?b2 ?min ?have_bike ?is_station)
-        (bind ?h 0)
-        (if (eq ?b1 ?b2)
-	  then    (bind ?h 1)
-	  else   (bind ?h (abs (- ?b1 ?b2)))
-       )
-       (bind ?h (* ?h ?min))
-       (if (or(eq ?have_bike yes)(eq ?is_station yes))
-       	then (bind ?h (* ?h 0.5))
-       	else (bind ?h (* ?h 1))
-       )
-       (integer ?h) ;return ?h
-)
-
-(deffunction control (?g ?b1 ?b2 ?min ?have_bike ?is_station)
-    (bind ?*f* (h1 ?b1 ?b2 ?min ?have_bike ?is_station))
-    (bind ?*f* (+ ?*f* ?g))
-)
-
 (defrule walking
   (declare (salience (- 0 ?*f*)))
   (state current ?x dest ?d bike ?have_bike cost ?c level ?n)
@@ -161,7 +141,7 @@
 )
 
 
-(defrule cyclig
+(defrule cycling
   (declare (salience (- 0 ?*f*)))
   (state current ?x dest ?d bike yes cost ?c level ?n)
   (path ?x ?y ?cc bike)
@@ -178,6 +158,23 @@
   (printout t "Cycling. Last state: " ?x " Cost: " ?c " Level:" ?n crlf)
 )
 
+(defrule jumping
+  (declare (salience (- 0 ?*f*)))
+  (max-depth ?deep)
+  (test (< ?n ?deep))
+  (state current ?x dest ?d bike yes cost ?c level ?n)
+  (path ?x ?y ?cc bike)
+  (path ?y ?z ?ccc bike)
+  (neighbourhood ?z ?b1)
+  (neighbourhood ?d ?b2)
+  (min_path ?z ?min)
+  (station ?z ?is_station)
+  (test (control (+ (+(div ?cc 2) (div ?ccc 2)) ?c) ?b1 ?b2 ?min yes ?is_station))
+    =>
+  (assert (state current ?z dest ?d bike yes cost (+(+(div ?cc 2) (div ?ccc 2))c) level (+ ?n 1)))
+  (bind ?*nod-gen* (+ ?*nod-gen* 1))
+  (printout t "Last state: " ?x " Cost: " ?c " Level:" ?n "Middle state:" ?y "Final state:" ?z crlf)
+)
 
 (defrule take_bike
   (declare (salience (- 0 ?*f*)))
@@ -210,7 +207,6 @@
   (printout t "Bike dropped at: " ?x " Cost: " ?c crlf)
 )
 
-
 (defrule stop
   (declare (salience 10))
   (state current ?x dest ?x bike no cost ?c level ?n)
@@ -218,7 +214,26 @@
   (halt)
   (printout t "Sol. found at level: " ?n " Nodes: " ?*nod-gen* " Cost: " ?c crlf)
 )
-	
+
+(deffunction h1 (?b1 ?b2 ?min ?have_bike ?is_station)
+        (bind ?h 0)
+        (if (eq ?b1 ?b2)
+	  then    (bind ?h 1)
+	  else   (bind ?h (abs (- ?b1 ?b2)))
+       )
+       (bind ?h (* ?h ?min))
+       (if (or(eq ?have_bike yes)(eq ?is_station yes))
+       	then (bind ?h (* ?h 0.5))
+       	else (bind ?h (* ?h 1))
+       )
+       (integer ?h) ;return ?h
+)
+
+(deffunction control (?g ?b1 ?b2 ?min ?have_bike ?is_station)
+    (bind ?*f* (h1 ?b1 ?b2 ?min ?have_bike ?is_station))
+    (bind ?*f* (+ ?*f* ?g))
+)
+
 
 (deffunction start()
 	(set-salience-evaluation when-activated)
@@ -233,4 +248,13 @@
 	(assert (max-depth ?deep))
 	(assert (state current A dest R bike no cost 0 level 0))
 )
-;;(deffacts initial (state current B dest M bike no cost 0 level 1))
+
+(deffunction jumpTest()
+	(set-salience-evaluation when-activated)
+	(reset)
+	(bind ?deep 10)
+	(set-strategy breadth)
+	(assert (max-depth ?deep))
+	(assert (state current A dest J bike no cost 0 level 0))
+)
+
