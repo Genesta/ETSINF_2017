@@ -42,26 +42,6 @@
 (neighbourhood R 6)
 )
 
-
-(deffunction h1 (?b1 ?b2 ?min ?have_bike ?is_station)
-        (bind ?h 0)
-        (if (eq ?b1 ?b2)
-	  then    (bind ?h 1)
-	  else   (bind ?h (abs (- ?b1 ?b2)))
-       )
-       (bind ?h (* ?h ?min))
-       (if (or(eq ?have_bike yes)(eq ?is_station yes))
-       	then (bind ?h (* ?h 0.5))
-       	else (bind ?h (* ?h 1))
-       )
-       (integer ?h) ;return ?h
-)
-
-(deffunction control (?g ?b1 ?b2 ?min ?have_bike ?is_station)
-    (bind ?*f* (h1 ?b1 ?b2 ?min ?have_bike ?is_station))
-    (bind ?*f* (+ ?*f* ?g))
-)
-
 (deffacts map
   (path A B 10 bike)
   (path A C 8 foot)
@@ -144,7 +124,24 @@
 )
 
 
+(deffunction h1 (?b1 ?b2 ?min ?have_bike ?is_station)
+        (bind ?h 0)
+        (if (eq ?b1 ?b2)
+	  then    (bind ?h 1)
+	  else   (bind ?h (abs (- ?b1 ?b2)))
+       )
+       (bind ?h (* ?h ?min))
+       (if (or(eq ?have_bike yes)(eq ?is_station yes))
+       	then (bind ?h (* ?h 0.5))
+       	else (bind ?h (* ?h 1))
+       )
+       (integer ?h) ;return ?h
+)
 
+(deffunction control (?g ?b1 ?b2 ?min ?have_bike ?is_station)
+    (bind ?*f* (h1 ?b1 ?b2 ?min ?have_bike ?is_station))
+    (bind ?*f* (+ ?*f* ?g))
+)
 
 (defrule walking
   (declare (salience (- 0 ?*f*)))
